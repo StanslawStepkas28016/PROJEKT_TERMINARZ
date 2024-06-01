@@ -1,0 +1,14 @@
+Terminarz
+
+Terminarz pozwalający na zapisywanie nadchodzących wydarzeń.
+- Program powinien wyświetlać zadania na bieżący dzień lub na dzień podany przez użytkownika,
+  lub na dni z zadanego przedziału.
+- Wczytywanie listy wydarzeń z pliku, zapis do pliku.
+- Możliwość dodawania, modyfikacji i usuwania wydarzeń. Sortowanie listy wydarzeń po dacie.
+- Możliwość tworzenia własnych tagów tematycznych (np. domowe, praca, studia)
+  i filtrowania wyświetlanych wydarzeń według tagów.
+
+Moja logika:
+- Obiekt Calendar przechowuje listę obiektów typu Event(Date date, string description, string tag = nullable),
+- Klasa Calendar zawiera metody: addEvent, removeEvent, getEventsListSortedByDate, getEventsBasedOnTag,
+storeCalendarInFile, storeCalendarInDatabase,
