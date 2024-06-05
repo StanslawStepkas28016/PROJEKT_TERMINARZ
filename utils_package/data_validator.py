@@ -5,7 +5,7 @@ from datetime import datetime
 class Validator:
     @staticmethod
     def date_validation(event_date_string: str) -> bool:
-        date_split: list[str] = event_date_string.split("-")
+        date_split: list[str] = event_date_string.split('-')
         try:
             datetime(int(date_split[0]),
                      int(date_split[1]),

@@ -1,6 +1,6 @@
 from utils_package.event import Event
 from utils_package.data_parser import Parser
-from colorama import Fore, Back, Style
+from colorama import Fore, Style
 
 
 class Calendar:
@@ -10,9 +10,20 @@ class Calendar:
     def add_event(self, event: Event) -> None:
         self.events_list.append(event)
 
+    def get_event_by_index(self, event_index: int) -> Event:
+        return self.events_list[event_index]
+
     def remove_event(self, event_index: int) -> bool:
         try:
             self.events_list.pop(event_index)
+        except IndexError:
+            return False
+
+        return True
+
+    def modify_event_validation(self, event_index: int) -> bool:
+        try:
+            self.events_list[event_index]
         except IndexError:
             return False
 
@@ -48,8 +59,6 @@ class Calendar:
             print(elem_to_print + ', ' + Fore.LIGHTYELLOW_EX + 'Tag: ' + Style.RESET_ALL + e.tag.__str__())
             count += 1
 
-    # Statyczny "konstruktor", czyta, to co jest w pliku, następnie parsuje dane do pliku,
-    # zwracając obiekt typu Calendar, który posiada już dodane (do listy) obiekty klasy Event
     @staticmethod
     def read_calendar_from_file_and_return_calendar_filled_with_events() -> 'Calendar':
         with open('files/stored_state.txt', 'r') as file:
@@ -58,7 +67,7 @@ class Calendar:
             calendar: Calendar = Calendar()
 
             for line in file_contents:
-                split: list[str] = line.split("|")
+                split: list[str] = line.split('|')
                 event_list.append(Event(Parser.parse_event_date_from_string_input(split[0]), split[1], split[2]))
             for event in event_list:
                 calendar.add_event(event)
