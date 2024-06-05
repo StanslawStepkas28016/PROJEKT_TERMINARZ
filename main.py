@@ -55,24 +55,61 @@ def handle_display_from_calendar(calendar: Calendar) -> None:
     clear_terminal()
     print_info('Wybór wydarzeń :')
     print('1. Sortowanie po dacie wydarzeń.')
-    print('2. Na podstawie taga.')
-    sort_type: int = int(input('Wprowadź swój wybór : '))
+    print('2. Na podstawie przedziału dni.')
+    print('3. Na podstawie jednego dnia.')
+    print('4. Na podstawie taga.')
+    display_type: int = int(input('Wprowadź swój wybór : '))
 
-    while not (sort_type == 1 or sort_type == 2):
+    while display_type > 4 or display_type < 1:
         clear_terminal()
         print_error('Podano niepoprawny typ sortowania!')
-        sleep(2)
+        input('Żeby podać ponownie, naciśnij enter : ')
         clear_terminal()
         print_info('Wybór wydarzeń :')
         print('1. Sortowanie po dacie wydarzeń.')
-        print('2. Na podstawie taga.')
-        sort_type = int(input('Wprowadź swój wybór : '))
+        print('2. Na podstawie przedziału dni.')
+        print('3. Na podstawie jednego dnia.')
+        print('4. Na podstawie taga.')
+        display_type = int(input('Wprowadź swój wybór : '))
 
     clear_terminal()
     print_info('Wydarzenia w terminarzu : ')
-    if sort_type == 1:
+    if display_type == 1:
         Calendar.print_events_in_provided_list(calendar.get_events_sorted_by_date())
-    elif sort_type == 2:
+    elif display_type == 2:
+        from_to_str: str = str(input('Wprowadź przedział datowy (YYYY-MM-DD YYYY-MM-DD) : '))
+        from_to_list: list[str] = from_to_str.split(' ')
+        from_valid: bool = Validator.date_validation_without_hours_and_minutes(from_to_list[0])
+        to_valid: bool = Validator.date_validation_without_hours_and_minutes(from_to_list[1])
+
+        while not from_valid and not to_valid:
+            print_error('Podano niepoprawne daty, upewnij się, że oddzielasz je spacją!')
+            input('Żeby podać ponownie, naciśnij enter : ')
+            clear_terminal()
+            from_to_str: str = str(input('Wprowadź przedział datowy (YYYY-MM-DD YYYY-MM-DD) : '))
+            from_to_list = from_to_str.split(' ')
+            from_valid = Validator.date_validation_without_hours_and_minutes(from_to_list[0])
+            to_valid = Validator.date_validation_without_hours_and_minutes(from_to_list[1])
+
+        from_date: datetime = Parser.parse_event_date_from_string_input_without_hours_and_minutes(from_to_list[0])
+        to_date: datetime = Parser.parse_event_date_from_string_input_without_hours_and_minutes(from_to_list[1])
+        events_in_dates_range: list[Event] = calendar.get_events_in_date_range(from_date, to_date)
+        Calendar.print_events_in_provided_list(events_in_dates_range)
+    elif display_type == 3:
+        date_at_str: str = str(input('Wprowadź datę YYYY-MM-DD : '))
+        date_at_valid: bool = Validator.date_validation_without_hours_and_minutes(date_at_str)
+
+        while not date_at_valid:
+            print_error('Podano niepoprawną datę!')
+            input('Żeby podać ponownie, naciśnij enter : ')
+            clear_terminal()
+            date_at_str = str(input('Wprowadź datę YYYY-MM-DD : '))
+            date_at_valid = Validator.date_validation_without_hours_and_minutes(date_at_str)
+
+        events_based_on_day: list[Event] = calendar.get_events_in_specific_date(
+            Parser.parse_event_date_from_string_input_without_hours_and_minutes(date_at_str))
+        Calendar.print_events_in_provided_list(events_based_on_day)
+    elif display_type == 4:
         input_tag: str = input('Podaj tag : ')
         events_list: list[Event] = calendar.get_events_sorted_by_tag(input_tag)
         if len(events_list) == 0:
@@ -131,7 +168,7 @@ def handle_modify_events_within_calendar(calendar: Calendar) -> None:
         modified_date = returned_event.event_date
     else:
         # Emulacja pętli do-while, służąca do walidacji wprowadzonej daty.
-        date_validated: bool = Validator.date_validation(modified_date_string)
+        date_validated: bool = Validator.date_validation_with_hour_and_minutes(modified_date_string)
         while not date_validated:
             print_error('Podano niepoprawną datę!')
             input('Żeby podać ponownie, naciśnij enter : ')
@@ -139,8 +176,8 @@ def handle_modify_events_within_calendar(calendar: Calendar) -> None:
             print(Fore.LIGHTYELLOW_EX + 'Obecna data : ' + Style.RESET_ALL + str(returned_event.event_date))
             modified_date_string = str(input(
                 'Jeżeli chcesz zmodyfikować datę, wpisz nową datę (YYYY-MM-DD-HH-MN), jeśli nie, naciśnij enter : '))
-            date_validated = Validator.date_validation(modified_date_string)
-        modified_date = Parser.parse_event_date_from_string_input(modified_date_string)
+            date_validated = Validator.date_validation_with_hour_and_minutes(modified_date_string)
+        modified_date = Parser.parse_event_date_from_string_input_with_hour_and_minutes(modified_date_string)
     # Pobranie nowego opisu od użytkownika.
     print(Fore.LIGHTYELLOW_EX + 'Obecny opis : ' + Style.RESET_ALL + returned_event.description)
     modified_description = str(input('Jeżeli chcesz zmodyfikować opis, wpisz nowy opis, jeśli nie, naciśnij enter : '))
@@ -160,15 +197,15 @@ def handle_add_to_calendar(calendar: Calendar) -> None:
     clear_terminal()
     event_date_str: str = (str(input('Podaj datę wydarzenia (YYYY-MM-DD-HH-MN) : ')))
     # Emulacja pętli do-while, służąca do walidacji wprowadzonej daty.
-    date_validated: bool = Validator.date_validation(event_date_str)
+    date_validated: bool = Validator.date_validation_with_hour_and_minutes(event_date_str)
     while not date_validated:
         print_error('Podano niepoprawną datę!')
         input('Żeby podać ponownie, naciśnij enter : ')
         clear_terminal()
         event_date_str: str = (str(input('Podaj datę wydarzenia (YYYY-MM-DD) : ')))
-        date_validated = Validator.date_validation(event_date_str)
+        date_validated = Validator.date_validation_with_hour_and_minutes(event_date_str)
     # Ustalenie zwalidowanej daty.
-    event_date: datetime = Parser.parse_event_date_from_string_input(event_date_str)
+    event_date: datetime = Parser.parse_event_date_from_string_input_with_hour_and_minutes(event_date_str)
     # Pobranie danych, bez potrzeby walidacji.
     description = str(input('Wprowadź opis zdarzenia : '))
     tag = str(input('Wprowadź tag zdarzenia (opcjonalne), wciśnij enter, jeżeli nie chcesz : '))

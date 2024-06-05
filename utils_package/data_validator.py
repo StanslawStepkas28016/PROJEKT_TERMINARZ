@@ -4,7 +4,7 @@ from datetime import datetime
 
 class Validator:
     @staticmethod
-    def date_validation(event_date_string: str) -> bool:
+    def date_validation_with_hour_and_minutes(event_date_string: str) -> bool:
         date_split: list[str] = event_date_string.split('-')
         try:
             datetime(int(date_split[0]),
@@ -12,6 +12,18 @@ class Validator:
                      int(date_split[2]),
                      int(date_split[3]),
                      int(date_split[4]))
+        except (ValueError, IndexError):
+            return False
+        else:
+            return True
+
+    @staticmethod
+    def date_validation_without_hours_and_minutes(event_date_string: str) -> bool:
+        date_split: list[str] = event_date_string.split('-')
+        try:
+            datetime(int(date_split[0]),
+                     int(date_split[1]),
+                     int(date_split[2]))
         except (ValueError, IndexError):
             return False
         else:

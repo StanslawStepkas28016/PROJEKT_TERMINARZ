@@ -1,6 +1,7 @@
 from utils_package.event import Event
 from utils_package.data_parser import Parser
 from colorama import Fore, Style
+from datetime import datetime
 
 
 class Calendar:
@@ -40,12 +41,31 @@ class Calendar:
                 events_list_based_on_a_tag.append(event)
         return events_list_based_on_a_tag
 
+    def get_events_in_specific_date(self, input_date: datetime) -> list[Event]:
+        event_list_based_on_specific_date = []
+        for event in self.events_list:
+            if (event.event_date.day == input_date.day
+                    and event.event_date.month == input_date.month
+                    and event.event_date.year == input_date.year):
+                event_list_based_on_specific_date.append(event)
+
+        return event_list_based_on_specific_date
+
+    def get_events_in_date_range(self, input_date_from: datetime, input_date_to: datetime) -> list[Event]:
+        event_list_based_on_date_range = []
+        for event in self.events_list:
+            if (input_date_from.year <= event.event_date.year <= input_date_to.year
+                    and input_date_from.month <= event.event_date.month <= input_date_to.month
+                    and input_date_from.day <= event.event_date.day <= input_date_to.day):
+                event_list_based_on_date_range.append(event)
+
+        return event_list_based_on_date_range
+
     def store_calendar_in_file(self) -> None:
         with open('files/stored_state.txt', 'w') as file:
             for event in self.events_list:
                 print(event.string_for_file_storing(), file=file)
 
-    # Metoda bierze już w jakiś sposób posortowaną listę, więc dlatego przyjmuje ją
     @staticmethod
     def print_events_in_provided_list(events_list: list[Event]) -> None:
         count: int = 1
@@ -68,7 +88,9 @@ class Calendar:
 
             for line in file_contents:
                 split: list[str] = line.split('|')
-                event_list.append(Event(Parser.parse_event_date_from_string_input(split[0]), split[1], split[2]))
+                event_list.append(
+                    Event(Parser.parse_event_date_from_string_input_with_hour_and_minutes(split[0]), split[1],
+                          split[2]))
             for event in event_list:
                 calendar.add_event(event)
 
