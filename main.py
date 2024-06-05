@@ -1,8 +1,8 @@
-from datetime import date
+from datetime import datetime
 from os import system, name
 from time import sleep
-from colorama import Fore, Back, Style
-# to jest dodatkowy import dla paczki do kolorów tekstu wyświetlanego na konsoli
+
+from colorama import Fore, Style
 
 from utils_package.event import Event
 from utils_package.calendar import Calendar
@@ -10,60 +10,121 @@ from utils_package.data_parser import Parser
 from utils_package.data_validator import Validator
 
 
-def main():
-    print(Fore.LIGHTMAGENTA_EX + '*** Projekt s28016 - Terminarz ***' + Style.RESET_ALL)
-    existing_user: bool = Calendar.does_calendar_file_exist()
+def main() -> None:
+    existing_user: bool = Validator.does_calendar_file_exist() and not Validator.is_calendar_file_empty()
     handle_user(existing_user)
 
 
-def handle_user(existing_user: bool):
-    calendar: Calendar = None
-
+def handle_user(existing_user: bool) -> None:
+    # Sprawdzenie, czy kalendarz istnieje z oddzielną obsługą dla obu przypadków.
+    calendar: Calendar
     if existing_user:
         calendar = Calendar.read_calendar_from_file_and_return_calendar_filled_with_events()
     else:
-        print('Stwórz swój pierwszy terminarz!')
-        calendar_name = str(input('Podaj nazwę swojego terminarza : '))
-        calendar = Calendar(calendar_name)
+        calendar = Calendar()
         clear_terminal()
 
+    # Pętla wyświetlająca dostępne opcje, z logiką działania programu i walidacją.
     while True:
         print_main_menu()
         option_etiquette = int(input('Wprowadź etykietę opcji : '))
 
         if option_etiquette > 4 or option_etiquette < 1:
-            print(Fore.LIGHTRED_EX + 'Podano niepoprawną etykietę opcji!' + Style.RESET_ALL)
-            sleep(1)
+            handle_wrong_option()
         elif option_etiquette == 1:
-            # dodać walidację
-            clear_terminal()
-            event_date: date = Parser.parse_event_date_from_input(str(input("Podaj datę zdarzenia (YYYY-MM-DD) : ")))
-            description = str(input("Wprowadź opis zdarzenia : "))
-            tag = str(input("Wprowadź tag zdarzenia (opcjonalne), wciśnij enter, jeżeli nie chcesz : "))
-            calendar.add_event(Event(event_date, description, tag))
-            print('Dodano wydarzenie do terminarza :)')
+            handle_add_to_calendar(calendar)
         elif option_etiquette == 2:
-            events_list = calendar.get_events_sorted_by_date()
-            calendar.print_events_in_provided_list(events_list)
-            event_index = int(input("Wprowadź numer zdarzenia do usunięcia : "))
-            # walidacja etykiety na zasadzie, metoda sprawdza wartość, rzucając wyjątek.
-            removed: bool = calendar.remove_event(event_index - 1)
-            if not removed:
-                print('Podano niepoprawny numer zdarzenia')
-            else:
-                print('Usunięto wydarzenie z terminarza')
+            handle_delete_from_calendar(calendar)
         elif option_etiquette == 3:
-            clear_terminal()
-            print('Wydarzenia w terminarzu :')
-            Calendar.print_events_in_provided_list(calendar.get_events_sorted_by_date())
-            sleep(3)
+            handle_display_from_calendar(calendar)
         elif option_etiquette == 4:
-            calendar.store_calendar_in_file()
-            print('Kalendarz zapisany!')
-            sleep(1)
+            handle_quit_app(calendar)
             break
 
         clear_terminal()
+
+
+def handle_quit_app(calendar: Calendar) -> None:
+    calendar.store_calendar_in_file()
+    print_log('Kalendarz zapisany!')
+
+
+def handle_display_from_calendar(calendar: Calendar) -> None:
+    clear_terminal()
+    print_info("Wybór wydarzeń :")
+    print("1. Sortowanie po dacie wydarzeń.")
+    print("2. Na podstawie taga.")
+    sort_type: int = int(input("Wprowadź swój wybór : "))
+
+    while not (sort_type == 1 or sort_type == 2):
+        clear_terminal()
+        print_error("Podano niepoprawny typ sortowania!")
+        sleep(2)
+        clear_terminal()
+        print_info("Wybór wydarzeń :")
+        print("1. Sortowanie po dacie wydarzeń.")
+        print("2. Na podstawie taga.")
+        sort_type = int(input("Wprowadź swój wybór : "))
+
+    clear_terminal()
+    print_info('Wydarzenia w terminarzu : ')
+    if sort_type == 1:
+        Calendar.print_events_in_provided_list(calendar.get_events_sorted_by_date())
+    elif sort_type == 2:
+        input_tag: str = input("Podaj tag : ")
+        events_list: list[Event] = calendar.get_events_sorted_by_tag(input_tag)
+        if len(events_list) == 0:
+            print_error("Brak wydarzeń zgodnych z podanym tagiem!")
+        else:
+            Calendar.print_events_in_provided_list(events_list)
+
+    input('Żeby wrócić do menu, naciśnij enter : ')
+
+
+def handle_delete_from_calendar(calendar: Calendar) -> None:
+    # Pobranie wydarzeń z kalendarza, razem z wprowadzeniem numeru zdarzenia do usunięcia.
+    print_info("Dostępne wydarzenia :")
+    events_list: list[Event] = calendar.get_events_sorted_by_date()
+    calendar.print_events_in_provided_list(events_list)
+    event_index: int = int(input("Wprowadź numer wydarzenia do usunięcia : "))
+    # Walidacja wprowadzonego numeru.
+    removed: bool = calendar.remove_event(event_index - 1)
+    while not removed:
+        clear_terminal()
+        event_index = int(input("Wprowadź numer wydarzenia do usunięcia : "))
+        removed = calendar.remove_event(event_index - 1)
+    # Log dotyczący usunięcia.
+    print_log('Zmiany zapisane!')
+    input('Żeby wrócić do menu, naciśnij enter : ')
+
+
+def handle_wrong_option() -> None:
+    # Podana została niepoprawna etykieta opcji.
+    print_error('Podano niepoprawną etykietę opcji!')
+    input('Żeby wrócić, naciśnij enter : ')
+
+
+def handle_add_to_calendar(calendar: Calendar):
+    # Pobranie daty wydarzenia i oczyszczenie terminalu.
+    clear_terminal()
+    event_date_str: str = (str(input("Podaj datę wydarzenia (YYYY-MM-DD-HH-MN) : ")))
+    # Emulacja pętli do-while, służąca do walidacji wprowadzonej daty.
+    date_validated: bool = Validator.date_validation(event_date_str)
+    while not date_validated:
+        print_error('Podano niepoprawną datę!')
+        input('Żeby podać ponownie, naciśnij enter : ')
+        clear_terminal()
+        event_date_str: str = (str(input("Podaj datę wydarzenia (YYYY-MM-DD) : ")))
+        date_validated = Validator.date_validation(event_date_str)
+    # Ustalenie zwalidowanej daty.
+    event_date: datetime = Parser.parse_event_date_from_string_input(event_date_str)
+    # Pobranie danych, bez potrzeby walidacji.
+    description = str(input("Wprowadź opis zdarzenia : "))
+    tag = str(input("Wprowadź tag zdarzenia (opcjonalne), wciśnij enter, jeżeli nie chcesz : "))
+    # Dodanie danych do kalendarza, wraz z odpowiednim logiem.
+    calendar.add_event(Event(event_date, description, tag))
+    print_log('Dodano wydarzenie do terminarza :)')
+    input('Żeby wrócić do menu, naciśnij enter : ')
 
 
 def print_main_menu():
@@ -72,6 +133,18 @@ def print_main_menu():
     print('2. Usuń wydarzenie z terminarza.')
     print('3. Wylistuj wydarzenie z terminarza.')
     print('4. Zakończ pracę programu.')
+
+
+def print_error(error_information: str):
+    print(Fore.LIGHTRED_EX + error_information + Style.RESET_ALL)
+
+
+def print_log(log_information: str):
+    print(Fore.LIGHTGREEN_EX + log_information + Style.RESET_ALL)
+
+
+def print_info(info_information: str):
+    print(Fore.LIGHTMAGENTA_EX + info_information + Style.RESET_ALL)
 
 
 def clear_terminal():

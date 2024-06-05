@@ -1,5 +1,3 @@
-Terminarz
-
 Terminarz pozwalający na zapisywanie nadchodzących wydarzeń.
 - Program powinien wyświetlać zadania na bieżący dzień lub na dzień podany przez użytkownika,
   lub na dni z zadanego przedziału.
