@@ -1,6 +1,5 @@
 from datetime import datetime
 from os import system, name
-from time import sleep
 
 from colorama import Fore, Style
 
@@ -11,12 +10,23 @@ from utils_package.data_validator import Validator
 
 
 def main() -> None:
+    """
+    Metoda sprawdza, czy użytkownik posiada już swój kalendarz i przekazuje parametr do kolejnej metody.
+    """
+
+    # Sprawdzenie, czy użytkownik istnieje (czy posiada plik z danymi z kalendarza)
     existing_user: bool = Validator.does_calendar_file_exist() and not Validator.is_calendar_file_empty()
     handle_user(existing_user)
 
 
 def handle_user(existing_user: bool) -> None:
-    # Sprawdzenie, czy kalendarz istnieje z oddzielną obsługą dla obu przypadków.
+    """
+    Metoda w zależności od tego, czy istnieje plik przechowujący dane kalendarza, czyta dane z pliku, bądź fabrykuje
+    nowy obiekt klasy Calendar. Dodatkowo metoda przeprowadza operacje wejścia-wyjścia, walidując wprowadzone
+    przez użytkownika dane etykiety opcji.
+    """
+
+    # Obsługa przypadków dla istniejącego i nowego użytkownika.
     calendar: Calendar
     if existing_user:
         calendar = Calendar.read_calendar_from_file_and_return_calendar_filled_with_events()
@@ -47,11 +57,22 @@ def handle_user(existing_user: bool) -> None:
 
 
 def handle_quit_app(calendar: Calendar) -> None:
+    """
+    Metoda zapisuje stan kalendarza do pliku, korzystając
+    z metody w klasie Calendar oraz wypisuje odpowiednią informację użytkownikowi.
+    """
+
     calendar.store_calendar_in_file()
     print_log('Kalendarz zapisany!')
 
 
 def handle_display_from_calendar(calendar: Calendar) -> None:
+    """
+    Metoda realizuje funkcjonalność wyświetlania danych zapisanych w kalendarzu,
+    na podstawie podanej przez użytkownika etykiety opcji. Na każdym etapie wprowadzania
+    danych, przeprowadzana jest walidacja, która zapobiega wprowadzeniu niepoprawnych danych.
+    """
+
     clear_terminal()
     print_info('Wybór wydarzeń :')
     print('1. Sortowanie po dacie wydarzeń.')
@@ -60,6 +81,7 @@ def handle_display_from_calendar(calendar: Calendar) -> None:
     print('4. Na podstawie taga.')
     display_type: int = int(input('Wprowadź swój wybór : '))
 
+    # Walidacja wprowadzonej etykiety opcji.
     while display_type > 4 or display_type < 1:
         clear_terminal()
         print_error('Podano niepoprawny typ sortowania!')
@@ -72,6 +94,7 @@ def handle_display_from_calendar(calendar: Calendar) -> None:
         print('4. Na podstawie taga.')
         display_type = int(input('Wprowadź swój wybór : '))
 
+    # Wypisanie odpowiednich informacji na konsole, w zależności od wybranej opcji.
     clear_terminal()
     print_info('Wydarzenia w terminarzu : ')
     if display_type == 1:
@@ -121,6 +144,13 @@ def handle_display_from_calendar(calendar: Calendar) -> None:
 
 
 def handle_delete_from_calendar(calendar: Calendar) -> None:
+    """
+    Metoda obsługuje funkcjonalność usuwania danych z kalendarza,
+    przeprowadza walidację wprowadzonych danych oraz wyświetla odpowiednie informacje.
+
+    Parameters:
+        calendar (Calendar): obiekt klasy kalendarz.
+    """
     # Pobranie wydarzeń z kalendarza, razem z wprowadzeniem numeru zdarzenia do usunięcia.
     print_info('Dostępne wydarzenia :')
     events_list: list[Event] = calendar.get_events_sorted_by_date()
@@ -128,18 +158,27 @@ def handle_delete_from_calendar(calendar: Calendar) -> None:
     event_index: int = int(input('Wprowadź numer wydarzenia do usunięcia : '))
     # Walidacja wprowadzonego numeru.
     removed: bool = calendar.remove_event(event_index - 1)
+
     while not removed:
         print_error('Podano niepoprawny numer zdarzenia do usunięcia!')
         input('Żeby podać ponownie, naciśnij enter : ')
         clear_terminal()
         event_index = int(input('Wprowadź numer wydarzenia do usunięcia : '))
         removed = calendar.remove_event(event_index - 1)
+
     # Log dotyczący usunięcia.
     print_log('Zmiany zapisane!')
     input('Żeby wrócić do menu, naciśnij enter : ')
 
 
 def handle_modify_events_within_calendar(calendar: Calendar) -> None:
+    """
+    Metoda obsługuje funkcjonalność modyfikowania danych w kalendarzu,
+    przeprowadza walidację wprowadzonych danych oraz wyświetla odpowiednie informacje.
+
+    Parameters:
+        calendar (Calendar): obiekt klasy kalendarz.
+    """
     # Wylistowanie dostępnych wydarzeń kalendarzu
     clear_terminal()
     print_info('Dostępne wydarzenia, które można modyfikować :')
@@ -193,6 +232,14 @@ def handle_modify_events_within_calendar(calendar: Calendar) -> None:
 
 
 def handle_add_to_calendar(calendar: Calendar) -> None:
+    """
+    Metoda obsługuje funkcjonalność dodawania danych do kalendarza,
+    przeprowadza walidację wprowadzonych danych oraz wyświetla odpowiednie informacje.
+
+    Parameters:
+        calendar (Calendar): obiekt klasy kalendarz.
+    """
+
     # Pobranie daty wydarzenia i oczyszczenie terminalu.
     clear_terminal()
     event_date_str: str = (str(input('Podaj datę wydarzenia (YYYY-MM-DD-HH-MN) : ')))
@@ -217,12 +264,20 @@ def handle_add_to_calendar(calendar: Calendar) -> None:
 
 
 def handle_wrong_option() -> None:
-    # Podana została niepoprawna etykieta opcji.
+    """
+    Metoda wyświetla użytkownikowi podanie niepoprawnej opcji,
+    prosząc o wciśnięcie klawisza enter, żeby przejść dalej.
+    """
+
     print_error('Podano niepoprawną etykietę opcji!')
     input('Żeby wrócić, naciśnij enter : ')
 
 
 def print_main_menu() -> None:
+    """
+    Metoda wyświetla dostępne w programie opcje.
+    """
+
     print(Fore.LIGHTMAGENTA_EX + 'Dostępne opcje :' + Style.RESET_ALL)
     print('1. Dodaj wydarzenie do terminarza.')
     print('2. Modyfikuj wydarzenie z terminarza.')
@@ -232,18 +287,43 @@ def print_main_menu() -> None:
 
 
 def print_error(error_information: str) -> None:
+    """
+    Metoda wyświetla wyspecyfikowany błąd, zmieniając kolor na konsoli.
+
+    Parameters:
+          error_information (str): wyspecyfikowana informacja o błędzie.
+    """
+
     print(Fore.LIGHTRED_EX + error_information + Style.RESET_ALL)
 
 
 def print_log(log_information: str) -> None:
+    """
+    Metoda wyświetla wyspecyfikowany log, zmieniając kolor na konsoli.
+
+    Parameters:
+      log_information (str): wyspecyfikowany log.
+    """
+
     print(Fore.LIGHTGREEN_EX + log_information + Style.RESET_ALL)
 
 
 def print_info(info_information: str) -> None:
+    """
+    Metoda wyświetla wyspecyfikowaną informacje, zmieniając kolor na konsoli.
+
+    Parameters:
+        info_information (str): wyspecyfikowana informacja.
+    """
+
     print(Fore.LIGHTMAGENTA_EX + info_information + Style.RESET_ALL)
 
 
 def clear_terminal():
+    """
+    Metoda przeczyszcza terminal.
+    """
+
     system('cls' if name == 'nt' else 'clear')
 
 
