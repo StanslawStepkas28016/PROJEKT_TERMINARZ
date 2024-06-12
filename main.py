@@ -1,11 +1,10 @@
 from datetime import datetime
 from os import system, name
-
 from colorama import Fore, Style
 
 from utils_package.event import Event
 from utils_package.calendar import Calendar
-from utils_package.data_parser import Parser
+import utils_package.data_parser as Parser
 from utils_package.data_validator import Validator
 
 
@@ -37,7 +36,14 @@ def handle_user(existing_user: bool) -> None:
     # Pętla wyświetlająca dostępne opcje, z logiką działania programu i walidacją.
     while True:
         print_main_menu()
-        option_etiquette = int(input('Wprowadź etykietę opcji : '))
+
+        try:
+            option_etiquette = int(input('Wprowadź etykietę opcji : '))
+        except ValueError:
+            print_error('Można wprowadzać tylko wartości numeryczne!')
+            input('Żeby podać ponownie, naciśnij enter : ')
+            clear_terminal()
+            continue
 
         if option_etiquette > 5 or option_etiquette < 1:
             handle_wrong_option()
@@ -79,7 +85,11 @@ def handle_display_from_calendar(calendar: Calendar) -> None:
     print('2. Na podstawie przedziału dni.')
     print('3. Na podstawie jednego dnia.')
     print('4. Na podstawie taga.')
-    display_type: int = int(input('Wprowadź swój wybór : '))
+
+    try:
+        display_type: int = int(input('Wprowadź swój wybór : '))
+    except ValueError:
+        print_error('Można wprowadzać tylko wartości numeryczne!')
 
     # Walidacja wprowadzonej etykiety opcji.
     while display_type > 4 or display_type < 1:
@@ -249,7 +259,7 @@ def handle_add_to_calendar(calendar: Calendar) -> None:
         print_error('Podano niepoprawną datę!')
         input('Żeby podać ponownie, naciśnij enter : ')
         clear_terminal()
-        event_date_str: str = (str(input('Podaj datę wydarzenia (YYYY-MM-DD) : ')))
+        event_date_str: str = (str(input('Podaj datę wydarzenia (YYYY-MM-DD-HH-MN) : ')))
         date_validated = Validator.date_validation_with_hour_and_minutes(event_date_str)
     # Ustalenie zwalidowanej daty.
     event_date: datetime = Parser.parse_event_date_from_string_input_with_hour_and_minutes(event_date_str)

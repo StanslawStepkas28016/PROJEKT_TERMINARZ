@@ -1,5 +1,8 @@
+import os
+
 from utils_package.event import Event
-from utils_package.data_parser import Parser
+from utils_package.data_validator import Validator
+import utils_package.data_parser as Parser
 from colorama import Fore, Style
 from datetime import datetime
 
@@ -157,9 +160,16 @@ class Calendar:
         """
         Metoda zapisuje obecną listę wydarzeń do pliku.
         """
-        with open('files/stored_state.txt', 'w') as file:
-            for event in self.events_list:
-                print(event.string_for_file_storing(), file=file)
+
+        if not Validator.does_calendar_file_exist():
+            os.makedirs('files', exist_ok=True)
+            with open('files/stored_state.txt', 'w') as file:
+                for event in self.events_list:
+                    print(event.string_for_file_storing(), file=file)
+        else:
+            with open('files/stored_state.txt', 'w') as file:
+                for event in self.events_list:
+                    print(event.string_for_file_storing(), file=file)
 
     @staticmethod
     def print_events_in_provided_list(events_list: list[Event]) -> None:
